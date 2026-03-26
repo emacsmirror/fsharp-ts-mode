@@ -476,6 +476,85 @@ The return value is suitable for `treesit-simple-indent-rules'."
      ((node-is "triple_quoted_string") prev-line 0)
      ((node-is "verbatim_string") prev-line 0))))
 
+;;;; Navigation and Imenu
+
+(defvar fsharp-ts-mode--defun-type-regexp
+  (regexp-opt '("type_definition"
+                "exception_definition"
+                "function_or_value_defn"
+                "member_defn"
+                "module_defn")
+              'symbols)
+  "Regex matching tree-sitter node types treated as defun-like.
+Used as the value of `treesit-defun-type-regexp'.")
+
+(defun fsharp-ts-mode--subtree-text (node type &optional depth)
+  "Return the text of the first TYPE child in NODE's subtree.
+Search up to DEPTH levels deep (default 2).  Return nil if not found."
+  (when-let* ((child (treesit-search-subtree node type nil nil (or depth 2))))
+    (treesit-node-text child t)))
+
+(defun fsharp-ts-mode--defun-name (node)
+  "Return the defun name of NODE.
+Return nil if there is no name or if NODE is not a defun node."
+  (pcase (treesit-node-type node)
+    ("type_definition"
+     ;; type_definition > *_type_defn > type_name > identifier
+     (fsharp-ts-mode--subtree-text node "type_name" 3))
+    ("exception_definition"
+     (fsharp-ts-mode--subtree-text node "\\`identifier\\'" 3))
+    ("function_or_value_defn"
+     (or
+      ;; Function: function_declaration_left > identifier
+      (when-let* ((fdl (treesit-search-subtree
+                        node "function_declaration_left" nil nil 1)))
+        (fsharp-ts-mode--subtree-text fdl "\\`identifier\\'"))
+      ;; Value: value_declaration_left > identifier_pattern > ... > identifier
+      (fsharp-ts-mode--subtree-text node "\\`identifier\\'" 4)))
+    ("member_defn"
+     ;; member_defn > method_or_prop_defn > property_or_ident
+     (when-let* ((prop (treesit-search-subtree
+                        node "property_or_ident" nil nil 2)))
+       (or (fsharp-ts-mode--subtree-text prop "method" 1)
+           (fsharp-ts-mode--subtree-text prop "\\`identifier\\'" 1))))
+    ("module_defn"
+     (fsharp-ts-mode--subtree-text node "\\`identifier\\'" 1))))
+
+(defun fsharp-ts-mode--defun-valid-p (node)
+  "Return non-nil if NODE is a valid definition.
+All named definition nodes are valid."
+  (treesit-node-check node 'named))
+
+(defun fsharp-ts-mode--imenu-name (node)
+  "Return a fully-qualified name for NODE by walking up ancestors.
+Joins ancestor names with `.' as delimiter."
+  (let ((name (fsharp-ts-mode--defun-name node))
+        (ancestors nil)
+        (parent (treesit-node-parent node)))
+    (while parent
+      (when (and (member (treesit-node-type parent)
+                         '("module_defn" "type_definition" "namespace"))
+                 (not (equal parent node)))
+        (let ((pname (pcase (treesit-node-type parent)
+                       ("namespace"
+                        (fsharp-ts-mode--subtree-text parent "long_identifier" 1))
+                       (_
+                        (fsharp-ts-mode--defun-name parent)))))
+          (when pname
+            (push pname ancestors))))
+      (setq parent (treesit-node-parent parent)))
+    (if ancestors
+        (concat (string-join ancestors ".") "." name)
+      name)))
+
+(defvar fsharp-ts-mode--imenu-settings
+  `(("Type" "\\`type_definition\\'" nil fsharp-ts-mode--imenu-name)
+    ("Exception" "\\`exception_definition\\'" nil fsharp-ts-mode--imenu-name)
+    ("Value" "\\`function_or_value_defn\\'" nil fsharp-ts-mode--imenu-name)
+    ("Member" "\\`member_defn\\'" nil fsharp-ts-mode--imenu-name)
+    ("Module" "\\`module_defn\\'" nil nil))
+  "Imenu settings for `fsharp-ts-mode'.")
+
 ;;;; Mode setup
 
 (defun fsharp-ts--setup-mode (language)
@@ -499,6 +578,15 @@ LANGUAGE should be `fsharp' or `fsharp-signature'."
     ;; Indentation
     (setq-local treesit-simple-indent-rules
                 (fsharp-ts-mode--indent-rules language))
+
+    ;; Navigation
+    (setq-local treesit-defun-type-regexp
+                (cons fsharp-ts-mode--defun-type-regexp
+                      #'fsharp-ts-mode--defun-valid-p))
+    (setq-local treesit-defun-name-function #'fsharp-ts-mode--defun-name)
+
+    ;; Imenu
+    (setq-local treesit-simple-imenu-settings fsharp-ts-mode--imenu-settings)
 
     (treesit-major-mode-setup)))
 

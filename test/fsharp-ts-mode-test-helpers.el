@@ -34,6 +34,8 @@ produces \"let x = 1\\nlet y = 2\"."
     (let* ((str (if (string-prefix-p "\n" string)
                     (substring string 1)
                   string))
+           ;; Check if original string ended with a newline
+           (had-trailing-newline (string-suffix-p "\n" str))
            (str (if (string-match "\n[ \t]*\\'" str)
                     (substring str 0 (match-beginning 0))
                   str))
@@ -43,11 +45,16 @@ produces \"let x = 1\\nlet y = 2\"."
                           (apply #'min (mapcar (lambda (l)
                                                 (- (length l) (length (string-trim-left l))))
                                               non-empty))
-                        0)))
-      (mapconcat (lambda (l)
-                   (if (string-blank-p l) ""
-                     (substring l min-indent)))
-                 lines "\n"))))
+                        0))
+           (result (mapconcat (lambda (l)
+                                (if (string-blank-p l) ""
+                                  (substring l min-indent)))
+                              lines "\n")))
+      ;; Preserve trailing newline -- F# tree-sitter grammar needs it
+      ;; for proper parsing of indentation-terminated constructs.
+      (if had-trailing-newline
+          (concat result "\n")
+        result))))
 
 ;;;; Buffer setup
 
