@@ -46,6 +46,12 @@ Set `fsharp-ts--debug` to get more debug information from TreeSitter:
 (setq fsharp-ts--debug 'font-lock)
 ```
 
+## Architecture
+
+See [doc/DESIGN.md](doc/DESIGN.md) for internal architecture documentation
+covering the two F# grammars, font-lock design, indentation challenges,
+and known limitations.
+
 [1]: https://github.com/bbatsov/fsharp-ts-mode/issues
 [2]: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
 [3]: https://github.com/bbatsov/fsharp-ts-mode/blob/main/CHANGELOG.md

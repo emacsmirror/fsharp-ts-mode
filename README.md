@@ -75,6 +75,24 @@ Then enable Eglot:
 (add-hook 'fsharp-ts-mode-hook #'eglot-ensure)
 ```
 
+## Known Limitations
+
+F# is an indentation-sensitive language -- the tree-sitter grammar needs
+correct whitespace to parse the code. This has a few practical consequences:
+
+- **Pasting unindented code**: If you paste a block of F# with all indentation
+  stripped, `indent-region` won't fix it because the parser can't make sense of
+  the flat structure. Paste code with its indentation intact, or re-indent it
+  manually.
+- **Script files (.fsx)**: Top-level expressions in scripts without an explicit
+  `module` declaration may not indent correctly due to how the grammar parses
+  them. Adding `module ScriptName` at the top helps.
+- **Incremental editing works well**: When you're writing code line by line, the
+  parser has enough context from preceding lines to indent correctly.
+
+See [doc/DESIGN.md](doc/DESIGN.md) for technical details on these limitations
+and the overall architecture.
+
 ## Keybindings
 
 | Key       | Command              | Description                    |
