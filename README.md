@@ -101,6 +101,16 @@ and the overall architecture.
 | `C-c C-a` | `ff-find-other-file` | Switch between `.fs` and `.fsi` |
 | `C-c C-c` | `compile`            | Run compilation                |
 
+## Background
+
+This package was inspired by [neocaml](https://github.com/bbatsov/neocaml), my
+tree-sitter-based OCaml mode. After spending time in the OCaml community I got
+curious about its .NET cousin and wanted a modern Emacs editing experience for
+F# as well. I strongly considered naming this package "Fa Dièse" (French for
+F sharp -- because naming things after spending time with OCaml does that to
+you), but ultimately chickened out and went with the boring-but-obvious
+`fsharp-ts-mode`. Naming is hard!
+
 ## License
 
 Copyright (C) 2026 Bozhidar Batsov
