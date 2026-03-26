@@ -361,10 +361,24 @@ If the previous line ends with a body-expecting token (like `=', `->',
         fsharp-ts-indent-offset
       0)))
 
+(defun fsharp-ts-mode--trailing-comment-p (node _parent &rest _)
+  "Return non-nil if NODE is a trailing comment after PARENT's content.
+A trailing comment is a `line_comment' that appears after all named
+children of a definition node.  The grammar attaches these to the
+preceding definition, but they should be indented at the definition's
+level, not the body's."
+  (and (string= (treesit-node-type node) "line_comment")
+       (null (treesit-node-next-sibling node t))))
+
 (defun fsharp-ts-mode--indent-rules (language)
   "Return tree-sitter indentation rules for LANGUAGE.
 The return value is suitable for `treesit-simple-indent-rules'."
   `((,language
+     ;; Trailing comments after a definition's body should align
+     ;; with the definition itself, not be indented as body.
+     ;; Must come before the generic parent-is rules.
+     (fsharp-ts-mode--trailing-comment-p parent-bol 0)
+
      ;; Comment continuation lines: align with body text.
      ;; Must come before `no-node' because empty lines inside
      ;; multi-line comments have node=nil, parent=block_comment.

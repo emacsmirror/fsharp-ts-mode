@@ -4,13 +4,16 @@ namespace Sample
 open System
 open System.Collections.Generic
 
+// A discriminated union
 type Shape =
     | Circle of radius: float
     | Rectangle of width: float * height: float
     | Triangle of base': float * height: float
 
+// A record type
 type Point = { X: float; Y: float }
 
+// An enum type
 type Color =
     | Red = 0
     | Green = 1
