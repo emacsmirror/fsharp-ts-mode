@@ -160,13 +160,6 @@ or (START END FACE) for position-based matching."
 
 ;;;; Indentation helpers
 
-(defun fsharp-ts-mode-test--strip-indentation (code)
-  "Remove all leading whitespace from each line of CODE."
-  (mapconcat
-   (lambda (line) (string-trim-left line))
-   (split-string code "\n")
-   "\n"))
-
 (defmacro when-indenting--it (mode description &rest code-strings)
   "Create a Buttercup test that asserts indentation is preserved.
 MODE is the major mode function to use.  DESCRIPTION is the test name.

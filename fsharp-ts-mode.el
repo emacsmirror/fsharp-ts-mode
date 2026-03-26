@@ -39,6 +39,7 @@
 ;;; Code:
 
 (require 'treesit)
+(require 'compile)
 
 (defgroup fsharp-ts nil
   "Major mode for editing F# code with tree-sitter."
@@ -146,7 +147,7 @@ version that requires a newer grammar."
     "module" "namespace" "open"
     "type" "exception" "inherit" "interface" "class" "struct" "enum"
     "member" "abstract" "override" "static"
-    "delegate" "not" "or" "null")
+    "delegate" "or" "null")
   "F# keywords for tree-sitter font-locking.")
 
 (defvar fsharp-ts-mode--builtin-ids
@@ -164,7 +165,7 @@ version that requires a newer grammar."
     "float32" "single" "char" "string" "unit" "obj" "exn"
     "option" "voption" "list" "array" "seq"
     "async" "task" "result" "lazy"
-    "bigint" "byte" "ResizeArray")
+    "bigint" "ResizeArray")
   "F# builtin type names for tree-sitter font-locking.")
 
 (defun fsharp-ts-mode--font-lock-settings (language)
@@ -523,7 +524,7 @@ Return nil if there is no name or if NODE is not a defun node."
 (defun fsharp-ts-mode--defun-valid-p (node)
   "Return non-nil if NODE is a valid definition.
 All named definition nodes are valid."
-  (treesit-node-check node 'named))
+  (not (null (treesit-node-type node))))
 
 (defun fsharp-ts-mode--imenu-name (node)
   "Return a fully-qualified name for NODE by walking up ancestors.
@@ -571,15 +572,6 @@ Joins ancestor names with `.' as delimiter."
               'symbols)
   "Regexp matching node types suitable for sexp-like navigation.")
 
-(defun fsharp-ts-mode-forward-sexp (&optional arg)
-  "Move forward across one balanced expression (sexp).
-With ARG, do it that many times.  Negative arg means move backward."
-  (interactive "^p")
-  (or arg (setq arg 1))
-  (funcall
-   (if (> arg 0) #'treesit-end-of-thing #'treesit-beginning-of-thing)
-   fsharp-ts-mode--block-regex (abs arg)))
-
 (defun fsharp-ts-mode--delimiter-p ()
   "Return non-nil if point is on a delimiter character."
   (let ((c (char-after)))
@@ -592,7 +584,14 @@ of sexps to move."
   (if (fsharp-ts-mode--delimiter-p)
       (let ((forward-sexp-function nil))
         (forward-sexp arg))
-    (fsharp-ts-mode-forward-sexp arg)))
+    ;; treesit-end-of-thing / treesit-beginning-of-thing are Emacs 30+.
+    ;; On Emacs 29, fall back to syntax-table movement.
+    (if (fboundp 'treesit-end-of-thing)
+        (funcall
+         (if (> arg 0) #'treesit-end-of-thing #'treesit-beginning-of-thing)
+         fsharp-ts-mode--block-regex (abs arg))
+      (let ((forward-sexp-function nil))
+        (forward-sexp arg)))))
 
 ;;;; Thing settings (Emacs 30+)
 
@@ -618,8 +617,6 @@ of sexps to move."
                            'symbols)))))
 
 ;;;; Compilation error support
-
-(require 'compile)
 
 (defconst fsharp-ts-mode--compilation-error-regexp
   ;; Matches: /path/to/file.fs(10,5): error FS0001: message
@@ -740,9 +737,6 @@ for .fs files and `fsharp-ts-signature-mode' for .fsi files."
   ;; ff-find-other-file setup
   (setq-local ff-other-file-alist fsharp-ts-other-file-alist)
 
-  ;; Compilation error support
-  (fsharp-ts-mode--setup-compilation)
-
   ;; Prettify symbols
   (setq-local prettify-symbols-alist fsharp-ts-mode-prettify-symbols-alist))
 
@@ -765,6 +759,9 @@ for .fs files and `fsharp-ts-signature-mode' for .fsi files."
   (add-to-list 'auto-mode-alist '("\\.fs\\'" . fsharp-ts-mode))
   (add-to-list 'auto-mode-alist '("\\.fsx\\'" . fsharp-ts-mode))
   (add-to-list 'auto-mode-alist '("\\.fsi\\'" . fsharp-ts-signature-mode)))
+
+;; Register F# compilation error regexp once at load time
+(fsharp-ts-mode--setup-compilation)
 
 ;; Hide F# build artifacts from find-file completion
 (dolist (ext '(".dll" ".exe" ".pdb"))
