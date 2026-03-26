@@ -617,6 +617,43 @@ of sexps to move."
      (comment ,(regexp-opt '("line_comment" "block_comment")
                            'symbols)))))
 
+;;;; Compilation error support
+
+(require 'compile)
+
+(defconst fsharp-ts-mode--compilation-error-regexp
+  ;; Matches: /path/to/file.fs(10,5): error FS0001: message
+  ;; Also:   /path/to/file.fs(10,5,10,20): error FS0001: message
+  `(,(rx bol
+         (group-n 1 (+ (not (in "()\n"))))   ; filename
+         "(" (group-n 2 (+ digit))           ; line
+         "," (group-n 3 (+ digit))           ; column
+         (? "," (+ digit) "," (+ digit))     ; optional end line,col
+         ")" ": "
+         (group-n 4 (or "error" "warning"))  ; severity
+         " FS" (+ digit) ": ")
+    1 2 3 nil nil)
+  "Compilation error regexp for F# compiler output (dotnet build).")
+
+(defun fsharp-ts-mode--setup-compilation ()
+  "Register F# compilation error patterns."
+  (add-to-list 'compilation-error-regexp-alist-alist
+               (cons 'fsharp fsharp-ts-mode--compilation-error-regexp))
+  (add-to-list 'compilation-error-regexp-alist 'fsharp))
+
+;;;; Prettify symbols
+
+(defcustom fsharp-ts-mode-prettify-symbols-alist
+  '(("->" . ?→)
+    ("<-" . ?←)
+    (">=" . ?≥)
+    ("<=" . ?≤)
+    ("<>" . ?≠)
+    ("fun" . ?λ))
+  "Alist of symbol prettifications for F# mode."
+  :type '(alist :key-type string :value-type character)
+  :package-version '(fsharp-ts-mode . "0.1.0"))
+
 ;;;; Mode setup
 
 (defun fsharp-ts--setup-mode (language)
@@ -701,7 +738,13 @@ for .fs files and `fsharp-ts-signature-mode' for .fsi files."
   (setq-local add-log-current-defun-function #'treesit-add-log-current-defun)
 
   ;; ff-find-other-file setup
-  (setq-local ff-other-file-alist fsharp-ts-other-file-alist))
+  (setq-local ff-other-file-alist fsharp-ts-other-file-alist)
+
+  ;; Compilation error support
+  (fsharp-ts-mode--setup-compilation)
+
+  ;; Prettify symbols
+  (setq-local prettify-symbols-alist fsharp-ts-mode-prettify-symbols-alist))
 
 ;;;###autoload
 (define-derived-mode fsharp-ts-mode fsharp-ts-base-mode "F#"
