@@ -2,6 +2,8 @@
 
 ## main (unreleased)
 
+## 0.1.0 (2026-03-27)
+
 ### New features
 
 - Font-lock (syntax highlighting) via tree-sitter, organized into 4 levels.
