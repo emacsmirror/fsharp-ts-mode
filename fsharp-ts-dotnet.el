@@ -34,7 +34,7 @@
 (require 'cl-lib)
 
 (defgroup fsharp-ts-dotnet nil
-  "dotnet CLI interaction for fsharp-ts-mode."
+  "Dotnet CLI interaction for fsharp-ts-mode."
   :prefix "fsharp-ts-dotnet-"
   :group 'fsharp-ts
   :link '(url-link :tag "GitHub" "https://github.com/bbatsov/fsharp-ts-mode"))
