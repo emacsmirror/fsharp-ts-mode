@@ -2,6 +2,23 @@
 
 ## main (unreleased)
 
+### New features
+
+- Enhanced Eglot integration (`fsharp-ts-eglot.el`): auto-download FsAutoComplete
+  with version pinning, custom server class with individual feature toggles
+  (analyzers, inlay hints, code lenses, pipeline hints, linter), type signature
+  at point, MSDN F1 help, XML doc comment generation, and `.fsproj` file
+  manipulation (move up/down, add, remove).
+- Imenu now includes Namespace and Case (union/enum) entries with fully-qualified names.
+- Font-lock: highlight wildcard pattern `_`, CE builder names (`async`, `task`, etc.),
+  preprocessor directives (`#if`/`#else`/`#endif`), pipe-left `<|` function target,
+  and anonymous record brackets `{|`/`|}`.
+- Support `.fsscript` file extension for F# scripts.
+
+### Bug fixes
+
+- Fix lint warning: capitalize defgroup docstring in `fsharp-ts-dotnet.el`.
+
 ## 0.1.0 (2026-03-27)
 
 ### New features
