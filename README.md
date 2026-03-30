@@ -238,6 +238,29 @@ Overlays are refreshed on save and can be updated manually with
 `M-x fsharp-ts-lens-refresh`. The overlay prefix (default `" // "`) and face
 are customizable via `fsharp-ts-lens-prefix` and `fsharp-ts-lens-face`.
 
+#### Pipeline type hints and inlay hints
+
+FsAutoComplete can show intermediate types at each step of `|>` pipeline
+chains, as well as parameter names and type annotations as inlay hints.
+These use the standard LSP inlay hints protocol and are rendered by eglot's
+built-in `eglot-inlay-hints-mode`:
+
+```emacs-lisp
+;; Enable pipeline type hints (off by default)
+(setq fsharp-ts-eglot-pipeline-hints t)
+
+;; Enable inlay hints display
+(add-hook 'fsharp-ts-mode-hook #'eglot-inlay-hints-mode)
+```
+
+This shows types inline as you write pipeline chains:
+
+```
+[1; 2; 3]                        // int list
+|> List.map string               // string list
+|> String.concat ", "            // string
+```
+
 #### Documentation info panel
 
 `fsharp-ts-info.el` provides a persistent documentation panel that shows
