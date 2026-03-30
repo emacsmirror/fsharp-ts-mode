@@ -120,6 +120,11 @@ let oldFunc x = x
 let add x y = x + y
 let applied = add 1 2
 
+// Qualified module paths and member access
+let sorted = System.Array.Sort [| 3; 1; 2 |]
+let joined = System.String.Join(", ", [| "a"; "b" |])
+let len = "hello".Length
+
 let t = true
 let f = false
 let u = ()
