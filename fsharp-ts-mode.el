@@ -257,6 +257,9 @@ The return value is suitable for `treesit-font-lock-settings'."
    `((union_type_case (identifier) @font-lock-constant-face)
      (named_module name: (_) @font-lock-type-face)
      (import_decl (long_identifier) @font-lock-type-face)
+     ;; Module/type parts in dot expressions (base position)
+     (dot_expression base: (long_identifier_or_op (identifier) @font-lock-type-face))
+     (dot_expression base: (long_identifier_or_op (long_identifier (identifier) @font-lock-type-face)))
 )
 
    :language 'fsharp
@@ -309,22 +312,47 @@ The return value is suitable for `treesit-font-lock-settings'."
 
    :language 'fsharp
    :feature 'property
+   :override t
    '((record_field (identifier) @font-lock-property-use-face)
-     (field_initializer field: (_) @font-lock-property-use-face))
+     (field_initializer field: (_) @font-lock-property-use-face)
+     ;; Dot expression: base parts are modules/types, field is member access
+     (dot_expression base: (_) field: (long_identifier_or_op (identifier) @font-lock-property-use-face))
+     (dot_expression base: (_) field: (long_identifier_or_op (long_identifier :anchor (identifier) @font-lock-property-use-face))))
 
    :language 'fsharp
    :feature 'function
    :override t
-   '((application_expression
+   '(;; Simple application: f x
+     (application_expression
       :anchor
       (long_identifier_or_op (identifier) @font-lock-function-call-face))
+     ;; Qualified application: Module.f x
      (application_expression
       :anchor
       (long_identifier_or_op
        (long_identifier (_) @_mod
                         :anchor
                         (identifier) @font-lock-function-call-face)))
-     ;; x |> f -- highlight f as function call
+     ;; Dot-expression application: obj.Method x or Module.Sub.func x
+     ;; Highlight the last identifier in the field position as function call
+     (application_expression
+      :anchor
+      (dot_expression
+       field: (long_identifier_or_op
+               (identifier) @font-lock-function-call-face)))
+     (application_expression
+      :anchor
+      (dot_expression
+       field: (long_identifier_or_op
+               (long_identifier (_)
+                                :anchor
+                                (identifier) @font-lock-function-call-face)))))
+   ;; Pipe operators -- separate rule group because :match requires
+   ;; captures from the same pattern.
+   :language 'fsharp
+   :feature 'function
+   :override t
+   '(;; x |> f -- highlight f as function call
      ((infix_expression
        (_)
        (infix_op) @_op
