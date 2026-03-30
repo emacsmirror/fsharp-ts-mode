@@ -197,13 +197,8 @@ The return value is suitable for `treesit-font-lock-settings'."
 
     :language language
     :feature 'type
-    `((simple_type (long_identifier) @font-lock-type-face)
-      ;; Generic types: IEqualityComparer<'T>
-      (generic_type (long_identifier) @font-lock-type-face)
-      ;; Type arguments: 'T, 'Key
-      (type_argument) @font-lock-type-face
-      ;; Postfix types: 'T array, int list
-      (postfix_type (long_identifier) @font-lock-type-face)
+    `(;; Type annotations (signature-safe subset)
+      (simple_type (long_identifier) @font-lock-type-face)
       (function_type "->" @font-lock-type-face)
       (namespace (long_identifier) @font-lock-type-face))
 
@@ -260,7 +255,10 @@ The return value is suitable for `treesit-font-lock-settings'."
    :language 'fsharp
    :feature 'type
    :override t
-   `((union_type_case (identifier) @font-lock-constant-face)
+   `(;; Catch-all for type annotations not covered by the shared rules:
+     ;; generic_type, type_argument, postfix_type, etc.
+     (_type) @font-lock-type-face
+     (union_type_case (identifier) @font-lock-constant-face)
      (named_module name: (_) @font-lock-type-face)
      (import_decl (long_identifier) @font-lock-type-face)
      ;; Module/type parts in dot expressions (base position)
