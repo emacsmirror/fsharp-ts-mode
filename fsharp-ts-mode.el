@@ -198,6 +198,12 @@ The return value is suitable for `treesit-font-lock-settings'."
     :language language
     :feature 'type
     `((simple_type (long_identifier) @font-lock-type-face)
+      ;; Generic types: IEqualityComparer<'T>
+      (generic_type (long_identifier) @font-lock-type-face)
+      ;; Type arguments: 'T, 'Key
+      (type_argument) @font-lock-type-face
+      ;; Postfix types: 'T array, int list
+      (postfix_type (long_identifier) @font-lock-type-face)
       (function_type "->" @font-lock-type-face)
       (namespace (long_identifier) @font-lock-type-face))
 

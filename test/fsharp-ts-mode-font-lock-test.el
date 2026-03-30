@@ -82,7 +82,15 @@
 
       (when-fontifying-it "highlights opened modules"
         ("open System\n"
-         ("System" font-lock-type-face)))))
+         ("System" font-lock-type-face)))
+
+      (when-fontifying-it "highlights generic type names"
+        ("let f (x: IComparer<int>) = x\n"
+         ("IComparer" font-lock-type-face)))
+
+      (when-fontifying-it "highlights type arguments"
+        ("let f (x: 'T -> 'Key) = x\n"
+         ("'Key" font-lock-type-face)))))
 
   (describe "level 3"
     (describe "constants"
