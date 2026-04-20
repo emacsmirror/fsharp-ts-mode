@@ -9,6 +9,8 @@ A tree-sitter-based Emacs major mode for [F#](https://fsharp.org) development.
 
 **Requires Emacs 29.1+** with tree-sitter support.
 
+**[Online documentation](https://bbatsov.github.io/fsharp-ts-mode)**
+
 ## Installation
 
 ### MELPA
